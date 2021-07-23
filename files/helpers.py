@@ -506,6 +506,15 @@ def get_base_ffmpeg_command(
     if target_fps > 90:
         target_fps = 90
 
+    target_width = round(target_height * 16 / 9)
+    scale_filter_opts = [
+        f"if(lt(iw,ih),{target_height},{target_width})",
+        f"if(lt(iw,ih),{target_width},{target_height})",
+        "force_original_aspect_ratio=decrease",
+        "force_divisible_by=2"
+    ]
+    scale_filter_str = ":".join(scale_filter_opts)
+
     base_cmd = [
         settings.FFMPEG_COMMAND,
         "-y",
@@ -514,7 +523,7 @@ def get_base_ffmpeg_command(
         "-c:v",
         encoder,
         "-filter:v",
-        "scale=-2:" + str(target_height) + ",fps=fps=" + str(target_fps),
+        f"scale={scale_filter_str},fps=fps={target_fps}",
         # always convert to 4:2:0 -- FIXME: this could be also 4:2:2
         # but compatibility will suffer
         "-pix_fmt",
